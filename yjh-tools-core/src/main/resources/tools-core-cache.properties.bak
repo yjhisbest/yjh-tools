@@ -1,0 +1,16 @@
+# Cache Key Prefix: suggest must set, and set the value that relation to  project
+tools.cache.redis.cachePrefix=star_framework
+
+# set business Cache Key
+tools.cache.redis.items[0].name=redPacket:
+# redis key expire time. unit: second
+tools.cache.redis.items[0].ttlSecond=120
+# cache null value. true: cache; false: don't cache
+tools.cache.redis.items[0].cacheNullValues=true
+
+# set business Cache Key
+tools.cache.redis.items[0].name=game:
+# redis key expire time. unit: second
+tools.cache.redis.items[0].ttlSecond=300
+# cache null value. true: cache; false: don't cache
+tools.cache.redis.items[0].cacheNullValues=false
