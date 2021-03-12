@@ -1,10 +1,10 @@
 # yjh-tool-core
 该模块包含：
-1，分布式锁：基于redis和自定义的RedisLock注解实现流控
-2，限流：基于redis和自定义的RedisLimit注解实现流控
-3，自定义缓存：redis
-4，跨域配置：导入@EnableCorsFilter即可在项目中完成跨域处理
-5，雪花算法工具：改工具遇到导入@EnableSnowflake注解开启，一秒钟能生产1024个雪花值
+* 1，分布式锁：基于redis和自定义的RedisLock注解实现流控
+* 2，限流：基于redis和自定义的RedisLimit注解实现流控
+* 3，自定义缓存：基于redis的@Cache缓存，可根据实际情况给不同业务配置不同的缓存时间
+* 4，跨域配置：导入@EnableCorsFilter即可在项目中完成跨域处理
+* 5，雪花算法工具：改工具遇到导入@EnableSnowflake注解开启，一秒钟能生产1024个雪花值
 
 # yjh-tool-demo
 该模块针对yjh-tool-core的功能做出了对应的demo
