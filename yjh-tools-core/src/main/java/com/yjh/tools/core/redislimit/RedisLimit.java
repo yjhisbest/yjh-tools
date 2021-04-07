@@ -18,6 +18,11 @@ public @interface RedisLimit {
     RedisLimitType redisLimitType() default RedisLimitType.CUSTOMER;
 
     /**
+     * 限流执行方案
+     */
+    RedisLimitExcuteType redisLimitExcuteType() default RedisLimitExcuteType.INCREMENT;
+
+    /**
      * redis限流的key
      * spel表达式
      * 当RedisLimitType为RedisLimitType.CUSTOMER，必须设置
@@ -49,6 +54,7 @@ public @interface RedisLimit {
      * a，0, 触发限流，等timeScope的生命周期结束，即可以重新访问
      * b，60，即触发限流，会锁定60秒不可操作
      *
+     * 目前只支持限流执行方式：RedisLimitExcuteType.INCREMENT
      */
     int lockTime() default 0;
 

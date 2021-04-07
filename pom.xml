@@ -7,7 +7,7 @@
     <groupId>com.yjh</groupId>
     <artifactId>yjh-tools</artifactId>
     <packaging>pom</packaging>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.1-SNAPSHOT</version>
     <name>yjh-tools</name>
 
     <modules>

@@ -11,9 +11,12 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.expression.EvaluationContext;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -59,6 +62,21 @@ public class RedisLimitAspect {
             }
             limitKey = String.format("%s%s", LIMIT_PREFIX, limitKey);
         }
+        RedisLimitExcuteType redisLimitExcuteType = redisLimitAnnotation.redisLimitExcuteType();
+        if (RedisLimitExcuteType.INCREMENT.equals(redisLimitExcuteType)) {
+            incrementLimit(limitKey, redisLimitAnnotation);
+        } else {
+            slidingWindowLua(limitKey, redisLimitAnnotation);
+        }
+        return point.proceed();
+    }
+
+    /**
+     * 通过key自增实现限流
+     * @param limitKey
+     * @param redisLimitAnnotation
+     */
+    public void incrementLimit(String limitKey, RedisLimit redisLimitAnnotation) {
         Long increment = stringRedisTemplate.opsForValue().increment(limitKey, 1);
         if (increment.equals(1L)) {
             // 设置生存时间
@@ -80,6 +98,54 @@ public class RedisLimitAspect {
             }
             throw new RedisLimitException(redisLimitAnnotation.errorMsg());
         }
-        return point.proceed();
+    }
+
+    /**
+     * 滑动窗口限流Lua脚本执行保证原子性
+     * 是把slidingWindow方法转换成lua脚本执行
+     * @param limitKey
+     * @param redisLimitAnnotation
+     */
+    public void slidingWindowLua(String limitKey, RedisLimit redisLimitAnnotation) {
+        int timeScope = redisLimitAnnotation.timeScope();
+        String limitLuaScript =
+                "local key = KEYS[1];   --限流KEY\n" +
+                "local timeScope = ARGV[1];   --限流时间\n" +
+                "local nowTime = ARGV[2];   --时间戳，zset的score\n" +
+                "local uuidstr = ARGV[3];   --zset的value\n" +
+                "redis.call('zadd', key, nowTime, uuidstr); --添加当前时间戳数据\n" +
+                "redis.call('expire', key, timeScope);  --更新key的有效期\n" +
+                "redis.call('zremrangebyscore', key, 0, ARGV[4]);  --过滤出最近timeScope时间的数据\n" +
+                "return redis.call('zcard', key);";
+        RedisScript<Long> redisScript = RedisScript.of(limitLuaScript, Long.class);
+        long nowTime = System.currentTimeMillis();
+        // 获取当前时间内的数量
+        Long size = stringRedisTemplate.execute(redisScript, Arrays.asList(limitKey),
+                new Object[]{timeScope + "", nowTime + "", UUID.randomUUID().toString(), (nowTime - timeScope * 1000) + ""});
+        if (size > redisLimitAnnotation.limitTimes()) {
+            throw new RedisLimitException(redisLimitAnnotation.errorMsg());
+        }
+    }
+
+    /**
+     * 滑动窗口限流
+     * (线程安全问题)
+     * @param limitKey
+     * @param redisLimitAnnotation
+     */
+    @Deprecated
+    public void slidingWindow(String limitKey, RedisLimit redisLimitAnnotation) {
+        long nowTime = System.currentTimeMillis();
+        // 添加当前时间戳数据
+        stringRedisTemplate.opsForZSet().add(limitKey, UUID.randomUUID().toString(), nowTime);
+        // 更新key的有效期
+        stringRedisTemplate.expire(limitKey, redisLimitAnnotation.timeScope(), TimeUnit.SECONDS);
+        // 过滤出最近timeScope时间的数据
+        stringRedisTemplate.opsForZSet().removeRangeByScore(limitKey, 0, nowTime - redisLimitAnnotation.timeScope() * 1000);
+        // 获取当前时间内的数量
+        Long size = stringRedisTemplate.opsForZSet().size(limitKey);
+        if (size > redisLimitAnnotation.limitTimes()) {
+            throw new RedisLimitException(redisLimitAnnotation.errorMsg());
+        }
     }
 }

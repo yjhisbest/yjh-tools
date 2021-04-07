@@ -1,11 +1,11 @@
 package com.yjh.tools.demo.controller;
 
 import com.yjh.tools.core.redislimit.RedisLimit;
+import com.yjh.tools.core.redislimit.RedisLimitExcuteType;
 import com.yjh.tools.core.redislimit.RedisLimitType;
 import com.yjh.tools.demo.dto.UserDto;
 import com.yjh.tools.demo.result.Result;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -105,7 +105,7 @@ public class RedisLimitController {
     }
 
     /**
-     * ip限流：自定义限流参数是
+     * ip限流：自定义限流参数
      * 5秒钟能访问10次
      * @return
      */
@@ -125,6 +125,18 @@ public class RedisLimitController {
     @RequestMapping("/testIpAnnotationParamLimitAndLock")
     public Result testIpAnnotationParamLimitAndLock() {
         log.info("enter testIpAnnotationParamLimitAndLock");
+        return Result.success();
+    }
+
+    /**
+     * 滑动窗口限流：ip限流：自定义限流参数
+     * 30秒钟能访问10次
+     * @return
+     */
+    @RedisLimit(redisLimitType = RedisLimitType.IP, redisLimitExcuteType = RedisLimitExcuteType.SLIDING_WINDOW, timeScope = 30, limitTimes = 10, errorMsg = "操作频繁")
+    @RequestMapping("/testIpAnnotationParamSlidingWindowLimit")
+    public Result testIpAnnotationParamSlidingWindowLimit() {
+        log.info("enter testIpAnnotationParamLimit");
         return Result.success();
     }
 
