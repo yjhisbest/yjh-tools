@@ -1,6 +1,6 @@
 # yjh-tool-core
 该模块包含：
-* 1，分布式锁：基于redis和自定义的RedisLock注解实现流控
+* 1，分布式锁：基于redis和自定义的RedisLock注解实现分布式锁
 * 2，限流：基于redis和自定义的RedisLimit注解实现流控。包括：使用key自增方式限流（默认）和滑动窗口方式限流
 * 3，自定义缓存：基于redis的@Cache缓存，可根据实际情况给不同业务配置不同的缓存时间
 * 4，跨域配置：导入@EnableCorsFilter即可在项目中完成跨域处理
